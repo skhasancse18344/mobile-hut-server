@@ -18,11 +18,34 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
+    const AllCategory = client.db("mobileHut").collection("AllCategories");
+    const AllProducts = client.db("mobileHut").collection("AllProducts");
+    const userCollection = client.db("mobileHut").collection("users");
+
     app.get("/category", async (req, res) => {
-      const AllCategory = client.db("mobileHut").collection("AllCategories");
       const query = {};
       const options = await AllCategory.find(query).toArray();
       res.send(options);
+    });
+    app.get("/category/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { category_id: id };
+      const products = await AllProducts.find(query).toArray();
+      res.send(products);
+    });
+
+    //User Entry on Database
+    app.post("/users", async (req, res) => {
+      const user = req.body;
+
+      const query = { email: user?.email };
+      const alreadyUserExist = await userCollection.find(query).toArray();
+
+      if (alreadyUserExist.length) {
+        return res.send({ acknowledged: false });
+      }
+      const result = await userCollection.insertOne(user);
+      res.send(result);
     });
   } finally {
   }
