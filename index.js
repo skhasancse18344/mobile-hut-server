@@ -29,9 +29,14 @@ async function run() {
     });
     app.get("/category/:id", async (req, res) => {
       const id = req.params.id;
-      const query = { category_id: id };
+      const query = { categoryId: id };
       const products = await AllProducts.find(query).toArray();
       res.send(products);
+    });
+    app.post("/products", async (req, res) => {
+      const products = req.body;
+      const result = await AllProducts.insertOne(products);
+      res.send(result);
     });
 
     //User Entry on Database
