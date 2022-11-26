@@ -21,6 +21,7 @@ async function run() {
     const AllCategory = client.db("mobileHut").collection("AllCategories");
     const AllProducts = client.db("mobileHut").collection("AllProducts");
     const userCollection = client.db("mobileHut").collection("users");
+    const bookingCollection = client.db("mobileHut").collection("bookings");
 
     app.get("/category", async (req, res) => {
       const query = {};
@@ -33,6 +34,7 @@ async function run() {
       const products = await AllProducts.find(query).toArray();
       res.send(products);
     });
+
     app.post("/products", async (req, res) => {
       const products = req.body;
       const result = await AllProducts.insertOne(products);
@@ -51,6 +53,20 @@ async function run() {
       }
       const result = await userCollection.insertOne(user);
       res.send(result);
+    });
+
+    //Booking
+    app.post("/bookings", async (req, res) => {
+      const booking = req.body;
+
+      const result = await bookingCollection.insertOne(booking);
+      res.send(result);
+    });
+    app.get("/mybookings/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { buyerEmail: email };
+      const bookings = await bookingCollection.find(query).toArray();
+      res.send(bookings);
     });
   } finally {
   }
