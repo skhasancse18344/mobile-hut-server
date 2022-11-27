@@ -92,9 +92,15 @@ async function run() {
       const allUser = await userCollection.find(query).toArray();
       res.send(allUser);
     });
-    app.put("/users/admin/:id", async (req, res) => {
+    app.put("/users/admin/:id", varifyJWT, async (req, res) => {
       const id = req.params.id;
-
+      const decodedEmail = req.decoded.email;
+      console.log("decoded Email", decodedEmail);
+      const query = { email: decodedEmail };
+      const user = await userCollection.findOne(query);
+      if (user.role !== "admin") {
+        return res.status(403).send({ message: "Forbidden Access" });
+      }
       const filter = { _id: ObjectId(id) };
       const option = { upsert: true };
       const updatedDoc = {
@@ -103,6 +109,31 @@ async function run() {
         },
       };
       const result = await userCollection.updateOne(filter, updatedDoc, option);
+      res.send(result);
+    });
+    app.put("/users/varify/:id", varifyJWT, async (req, res) => {
+      const id = req.params.id;
+      const decodedEmail = req.decoded.email;
+      console.log("decoded Email", decodedEmail);
+      const query = { email: decodedEmail };
+      const user = await userCollection.findOne(query);
+      if (user.role !== "admin") {
+        return res.status(403).send({ message: "Forbidden Access" });
+      }
+      const filter = { _id: ObjectId(id) };
+      const option = { upsert: true };
+      const updatedDoc = {
+        $set: {
+          varification: "Varified",
+        },
+      };
+      const result = await userCollection.updateOne(filter, updatedDoc, option);
+      res.send(result);
+    });
+    app.delete("/users/delete/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const result = await userCollection.deleteOne(query);
       res.send(result);
     });
 
@@ -116,7 +147,7 @@ async function run() {
     app.get("/mybookings/:email", varifyJWT, async (req, res) => {
       const email = req.params.email;
       const decodedEmail = req.decoded.email;
-      console.log("decoded Email", decodedEmail);
+
       if (email !== decodedEmail) {
         return res.status(403).send({ message: "Forbidden Access" });
       }
