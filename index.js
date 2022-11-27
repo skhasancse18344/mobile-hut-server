@@ -156,6 +156,15 @@ async function run() {
       const bookings = await bookingCollection.find(query).toArray();
       res.send(bookings);
     });
+
+    //My Product
+
+    app.get("/myproduct/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email: email };
+      const myBookings = await AllProducts.find(query).toArray();
+      res.send(myBookings);
+    });
   } finally {
   }
 }
