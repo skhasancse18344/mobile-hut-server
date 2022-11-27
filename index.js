@@ -54,6 +54,11 @@ async function run() {
       const result = await userCollection.insertOne(user);
       res.send(result);
     });
+    app.get("/allusers", async (req, res) => {
+      const query = {};
+      const allUser = await userCollection.find(query).toArray();
+      res.send(allUser);
+    });
 
     //Booking
     app.post("/bookings", async (req, res) => {
