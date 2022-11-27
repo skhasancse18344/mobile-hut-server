@@ -1,6 +1,8 @@
 const express = require("express");
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
+const jwt = require("jsonwebtoken");
 const cors = require("cors");
+const { query } = require("express");
 require("dotenv").config();
 const port = process.env.PORT || 5000;
 const app = express();
@@ -16,6 +18,22 @@ const client = new MongoClient(uri, {
   serverApi: ServerApiVersion.v1,
 });
 
+function varifyJWT(req, res, next) {
+  console.log("Token inside verifyJWT", req.headers.authorization);
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    return res.status(401).send("Unauthorized Access");
+  }
+  const token = authHeader.split(" ")[1];
+
+  jwt.verify(token, process.env.ACCESS_TOKEN, function (err, decoded) {
+    if (err) {
+      res.status(403).send({ message: "Forbidden Access" });
+    }
+    req.decoded = decoded;
+    next();
+  });
+}
 async function run() {
   try {
     const AllCategory = client.db("mobileHut").collection("AllCategories");
@@ -42,6 +60,21 @@ async function run() {
     });
 
     //User Entry on Database
+    app.get("/jwt", async (req, res) => {
+      const email = req.query.email;
+
+      const query = { email: email };
+      console.log(query);
+      const user = await userCollection.findOne(query);
+
+      if (user) {
+        const token = jwt.sign({ email }, process.env.ACCESS_TOKEN, {
+          expiresIn: "10h",
+        });
+        return res.send({ accessToken: token });
+      }
+      res.status(403).send({ accessToken: "" });
+    });
     app.post("/users", async (req, res) => {
       const user = req.body;
 
@@ -59,6 +92,19 @@ async function run() {
       const allUser = await userCollection.find(query).toArray();
       res.send(allUser);
     });
+    app.put("/users/admin/:id", async (req, res) => {
+      const id = req.params.id;
+
+      const filter = { _id: ObjectId(id) };
+      const option = { upsert: true };
+      const updatedDoc = {
+        $set: {
+          role: "admin",
+        },
+      };
+      const result = await userCollection.updateOne(filter, updatedDoc, option);
+      res.send(result);
+    });
 
     //Booking
     app.post("/bookings", async (req, res) => {
@@ -67,8 +113,14 @@ async function run() {
       const result = await bookingCollection.insertOne(booking);
       res.send(result);
     });
-    app.get("/mybookings/:email", async (req, res) => {
+    app.get("/mybookings/:email", varifyJWT, async (req, res) => {
       const email = req.params.email;
+      const decodedEmail = req.decoded.email;
+      console.log("decoded Email", decodedEmail);
+      if (email !== decodedEmail) {
+        return res.status(403).send({ message: "Forbidden Access" });
+      }
+      console.log("token", req.headers.authorization);
       const query = { buyerEmail: email };
       const bookings = await bookingCollection.find(query).toArray();
       res.send(bookings);
