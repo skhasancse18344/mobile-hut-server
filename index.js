@@ -19,7 +19,7 @@ const client = new MongoClient(uri, {
 });
 
 function varifyJWT(req, res, next) {
-  console.log("Token inside verifyJWT", req.headers.authorization);
+  //   console.log("Token inside verifyJWT", req.headers.authorization);
   const authHeader = req.headers.authorization;
   if (!authHeader) {
     return res.status(401).send("Unauthorized Access");
@@ -64,7 +64,7 @@ async function run() {
       const email = req.query.email;
 
       const query = { email: email };
-      console.log(query);
+      //   console.log(query);
       const user = await userCollection.findOne(query);
 
       if (user) {
@@ -95,7 +95,7 @@ async function run() {
     app.put("/users/admin/:id", varifyJWT, async (req, res) => {
       const id = req.params.id;
       const decodedEmail = req.decoded.email;
-      console.log("decoded Email", decodedEmail);
+      //   console.log("decoded Email", decodedEmail);
       const query = { email: decodedEmail };
       const user = await userCollection.findOne(query);
       if (user.role !== "admin") {
@@ -114,7 +114,7 @@ async function run() {
     app.put("/users/varify/:id", varifyJWT, async (req, res) => {
       const id = req.params.id;
       const decodedEmail = req.decoded.email;
-      console.log("decoded Email", decodedEmail);
+      //   console.log("decoded Email", decodedEmail);
       const query = { email: decodedEmail };
       const user = await userCollection.findOne(query);
       if (user.role !== "admin") {
@@ -151,7 +151,7 @@ async function run() {
       if (email !== decodedEmail) {
         return res.status(403).send({ message: "Forbidden Access" });
       }
-      console.log("token", req.headers.authorization);
+      //   console.log("token", req.headers.authorization);
       const query = { buyerEmail: email };
       const bookings = await bookingCollection.find(query).toArray();
       res.send(bookings);
@@ -164,6 +164,35 @@ async function run() {
       const query = { email: email };
       const myBookings = await AllProducts.find(query).toArray();
       res.send(myBookings);
+    });
+    app.delete("/myproduct/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const result = await AllProducts.deleteOne(query);
+      res.send(result);
+    });
+    app.delete("/myBookingDelete/:id", async (req, res) => {
+      const id = req.params.id;
+      const bookinQuery = { bookingID: id };
+      const bookingResult = await bookingCollection.deleteMany(bookinQuery);
+      res.send(bookingResult);
+    });
+    app.put("/advertiseproduct/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: ObjectId(id) };
+      const option = { upsert: true };
+      const updatedDoc = {
+        $set: {
+          advertiseProdcut: true,
+        },
+      };
+      const result = await AllProducts.updateOne(filter, updatedDoc, option);
+      res.send(result);
+    });
+    app.get("/advertisePrudct", async (req, res) => {
+      const query = { advertiseProdcut: true };
+      const adProduct = await AllProducts.find(query).toArray();
+      res.send(adProduct);
     });
   } finally {
   }
