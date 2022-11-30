@@ -87,8 +87,13 @@ async function run() {
       const result = await userCollection.insertOne(user);
       res.send(result);
     });
-    app.get("/allusers", async (req, res) => {
-      const query = {};
+    app.get("/allseller", async (req, res) => {
+      const query = { userType: "seller" };
+      const allUser = await userCollection.find(query).toArray();
+      res.send(allUser);
+    });
+    app.get("/allbuyer", async (req, res) => {
+      const query = { userType: "buyer" };
       const allUser = await userCollection.find(query).toArray();
       res.send(allUser);
     });
@@ -96,14 +101,15 @@ async function run() {
       const email = req.params.email;
       const query = { email: email };
       const allUser = await userCollection.findOne(query);
+      console.log(allUser);
       res.send(allUser);
     });
     app.get("/allusers/:email", async (req, res) => {
       const email = req.params.email;
-      console.log(email);
 
       const query = { email: email };
       const option = await userCollection.findOne(query);
+
       res.send(option);
     });
     app.put("/users/admin/:email", async (req, res) => {
@@ -166,7 +172,7 @@ async function run() {
 
     //Booking
     app.post("/bookings", async (req, res) => {
-      const booking = req;
+      const booking = req.body;
 
       const result = await bookingCollection.insertOne(booking);
       res.send(result);
